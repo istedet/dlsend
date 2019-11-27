@@ -26,6 +26,7 @@ data_to_send = tk.StringVar()
 con_ip = tk.StringVar()
 con_port = tk.StringVar()
 
+# Initiate the class so that we have something to connect with
 sock = tcpcom.TCPClient(data_reply)
 
 # Set up the frames for buttons and labelframe
@@ -68,27 +69,31 @@ d_ent_data.grid(column=0, row=1, sticky=tk.W)
 stored_command_lbox = tk.Listbox(
     left_con_frame, listvariable=stored_command_var, height=7, width=75)
 stored_command_lbox.grid(column=0, row=0, columnspan=2)
-stored_command_lbox.configure(selectmode="browse")
+# Exportselection has to be false otherwhise you get a "tuple index out of range"
+# error because the <<ListboxSelect>> event triggers with nothing selected
+stored_command_lbox.configure(selectmode="browse", exportselection=False)
 ttk.Button(left_con_frame, text="Store command", command=ftools.partial(
     utils.insert_stored_command, stored_command_lbox, data_to_send)).grid(column=0, row=1)
 ttk.Button(left_con_frame, text="Delete command", command=ftools.partial(
     utils.del_stored_command, stored_command_lbox)).grid(column=1, row=1)
 
-# Right frame buttons. The naming is weird
-# b_connect = ttk.Button(r_button_frame, text="Connect",
-#                        command=ftools.partial(utils.connect, sock, con_ip, con_port))
+# Buttons in the frame on the right that lets you connect/disconnect/send commands
+# and exit the program
 b_connect = ttk.Button(r_button_frame, text="Connect", command=ftools.partial(
-    utils.update_and_connect, sock, con_ip, con_port))
-b_close_con = ttk.Button(r_button_frame, text="Close connection", command=sock.disconnect)
-b_send_stored = ttk.Button(r_button_frame, text="Send stored", command=ftools.partial(
-    utils.send_stored_command, sock, stored_command_lbox, data_reply))
+    utils.update_and_connect, sock, con_ip, con_port, ip_entry, port_entry))
+b_close_con = ttk.Button(r_button_frame, text="Close connection", command=ftools.partial(
+    utils.update_and_disconnect, sock, ip_entry, port_entry))
 b_send = ttk.Button(r_button_frame, text="Send", command=ftools.partial(
     sock.send, data_to_send))
+b_exit = ttk.Button(r_button_frame, text="Exit", command=root.destroy)
 b_connect.grid(column=0, row=0, sticky=(tk.N, tk.E, tk.S, tk.W))
 b_close_con.grid(column=0, row=1, sticky=(tk.N, tk.E, tk.S, tk.W))
-b_send_stored.grid(column=0, row=2, sticky=(tk.N, tk.E, tk.S, tk.W))
 b_send.grid(column=0, row=3, sticky=(tk.N, tk.E, tk.S, tk.W))
+b_exit.grid(column=0, row=10, sticky=(tk.N, tk.E, tk.S, tk.W))
 
+# Binding to update data_to_send when you select something in the list
+stored_command_lbox.bind('<<ListboxSelect>>', ftools.partial(
+    utils.update_data, data_to_send, stored_command_lbox))
 
 # Give every child item some padding so that it doesn'root look like shit.
 for child in tframe.winfo_children():

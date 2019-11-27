@@ -2,27 +2,37 @@ import socket
 import tkinter as tk
 import utils
 import select
+import ipaddress
 from tkinter import messagebox as msgbox
 
 
 class TCPClient():
     def __init__(self, reply):
-        # this is the constructor that takes in host and port. retryAttempts is given
-        # a default value but can also be fed in.
+        # this is the constructor that takes in host and port.
         self.host = ''
         self.port = ''
+        self.connected = False
         self.reply = reply
         self.socket = None
 
     def connect(self):
-        #
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((self.host, self.port))
+        if ((not self.connected) and type(self.host) == str and type(self.port) == int):
+            try:
+                self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.socket.connect((self.host, self.port))
+            except Exception as e:
+                msgbox.showerror("Error", f'An error has occured: {e}')
+                return False
+            else:
+                self.connected = True
+                return True
 
     def disconnect(self):
-        self.socket.shutdown(socket.SHUT_RDWR)
-        self.socket.close()
-        self.socket = None
+        if (self.connected):
+            self.socket.shutdown(socket.SHUT_RDWR)
+            self.socket.close()
+            self.socket = None
+            self.connected = False
 
     def send(self, command):
         try:
@@ -46,5 +56,16 @@ class TCPClient():
             self.reply.set("No data received (Timeout 5s)")
 
     def sethostdetails(self, host, port):
-        self.host = host
-        self.port = port
+        self.validate_host_port(host, port)
+
+    def validate_host_port(self, host, port):
+        try:
+            if (not (type(host.get() == str) and port.get().isdigit())):
+                raise Exception("host is not a string or port is not a number")
+
+            ipaddress.ip_address(host.get())
+        except Exception as e:
+            msgbox.showerror("Error", f'An error has occured: {e}')
+        else:
+            self.host = host.get()
+            self.port = int(port.get())
