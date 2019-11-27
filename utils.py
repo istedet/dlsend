@@ -9,9 +9,9 @@ def program_exit(window):
     window.destroy()
 
 
-def connect(ip, port):
+def connect(s, ip, port):
     # First create the socket
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     # Validate the input. Both input values should be tk.StringVar
     if (not (type(ip) == tk.StringVar and type(port) == tk.StringVar)):
@@ -22,7 +22,7 @@ def connect(ip, port):
 
         # Return the connection object. This only happens if the supplied values
         # are correct
-        return s
+        # return s
 
 
 def send(s, command, reply):
@@ -43,12 +43,10 @@ def send(s, command, reply):
         msgbox.showerror("Error", f'An error has occured: {e}')
 
 
-def sock_end(s, t):
+def sock_end(s):
     # Shutdown the socket, close it and exit the window
     s.shutdown(socket.SHUT_RDWR)
     s.close()
-
-    t.destroy()
 
 
 def del_stored_command(lbox):
@@ -137,3 +135,8 @@ def convert_from_char(b_arr):
     new_str = repr(buf_str)
 
     return new_str
+
+
+def update_and_connect(sock, ip, port):
+    sock.sethostdetails(ip.get(), int(port.get()))
+    sock.connect()

@@ -2,55 +2,108 @@ import tkinter as tk
 from tkinter import ttk
 import functools as ftools
 import utils
-import conwindow
+import socket
+import tcpcom
+
 
 # Create main window
 root = tk.Tk()
 root.title("Datalogic transmission tool")
+stored_command_list = ['12 23233 344 44141', '2131231441241', '12412121  2332313']
+stored_command_var = tk.StringVar()
+stored_command_var.set(stored_command_list)
+
+# Create the new window, setting a name and the focus to the window
+root.title('Active connection')
+root.focus()
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)
 
-# Create a root frame
+# Create a StringVar to hold the reply from the printer
+data_reply = tk.StringVar()
+data_reply.set('No reply received')
+data_to_send = tk.StringVar()
+con_ip = tk.StringVar()
+con_port = tk.StringVar()
+
+sock = tcpcom.TCPClient(data_reply)
+
+# Set up the frames for buttons and labelframe
 tframe = ttk.Frame(root, padding="3 3")
-bframe = ttk.Frame(root, padding="3 3")
-tframe.grid(column=0, row=0, sticky=(tk.N, tk.E, tk.S, tk.W))
-bframe.grid(column=0, row=1, sticky=(tk.N, tk.E, tk.S, tk.W))
+bframe = ttk.Frame(tframe, padding="3 3")
+
+# row and columnconfigure are required to get the labelframe to expand
+# to fill the available space
 tframe.columnconfigure(0, weight=1)
 tframe.rowconfigure(0, weight=1)
+tframe.grid(column=0, row=0, sticky=(tk.N, tk.E, tk.S, tk.W))
 
-# Create the values to hold the IP and Port
-connection_ip = tk.StringVar()
-connection_port = tk.StringVar()
+# Add the printer reply labelframe. Sticky it to all sides to get it to
+# expand together with the top frame
+con_frame = ttk.LabelFrame(tframe, text="Printer connection data")
+con_frame.grid(column=0, row=0, sticky=(tk.N, tk.E, tk.S, tk.W))
+l_con_frame = ttk.LabelFrame(tframe, text="Transmit/receive")
+l_con_frame.grid(column=0, row=1, sticky=(tk.W, tk.E, tk.S, tk.W))
+left_con_frame = ttk.LabelFrame(tframe, text="Stored commands")
+left_con_frame.grid(column=0, row=3, rowspan=2, sticky=(tk.N, tk.E, tk.S, tk.W))
+r_button_frame = ttk.LabelFrame(tframe, text="Actions")
+r_button_frame.grid(column=1, row=0, rowspan=10, sticky=(tk.N, tk.E, tk.S, tk.W))
 
-# Set default values for the connection
-connection_ip.set('127.0.0.1')
-connection_port.set('4001')
+# Create the text labels and populate the IP and Port
+ttk.Label(con_frame, text="Active ip:").grid(column=0, row=0, sticky=tk.W)
+ttk.Label(con_frame, text="Active port:").grid(column=0, row=1, sticky=tk.W)
+ip_entry = ttk.Entry(con_frame, textvariable=con_ip, width=20)
+port_entry = ttk.Entry(con_frame, textvariable=con_port, width=7)
+ip_entry.grid(column=1, row=0, columnspan=2, sticky=tk.W)
+port_entry.grid(column=1, row=1, sticky=tk.W)
 
-# Create the labelframe and anchor it to the top
-top_label_frame = ttk.LabelFrame(tframe, text="Connection details")
-top_label_frame.grid(column=1, row=0, sticky=(tk.N, tk.E, tk.S, tk.W))
-top_label_frame.columnconfigure(0, weight=1)
-top_label_frame.rowconfigure(0, weight=1)
+d_ent_reply = ttk.Entry(l_con_frame, textvariable=data_reply, width=75)
+d_ent_reply.grid(column=0, row=0, sticky=tk.W)
+d_ent_reply.configure(state="readonly")
+d_ent_data = ttk.Entry(l_con_frame, textvariable=data_to_send, width=75)
+d_ent_data.grid(column=0, row=1, sticky=tk.W)
 
-# Set up the rightmost labelframe
-ttk.Label(top_label_frame, text="IP address:").grid(column=0, row=0, sticky=tk.W)
-ttk.Label(top_label_frame, text="Port:").grid(column=1, row=0, sticky=tk.W)
+# Leftmost labelframe labels and listbox. The list variable has to be a
+# StringVar.
+stored_command_lbox = tk.Listbox(
+    left_con_frame, listvariable=stored_command_var, height=7, width=75)
+stored_command_lbox.grid(column=0, row=0, columnspan=2)
+stored_command_lbox.configure(selectmode="browse")
+ttk.Button(left_con_frame, text="Store command", command=ftools.partial(
+    utils.insert_stored_command, stored_command_lbox, data_to_send)).grid(column=0, row=1)
+ttk.Button(left_con_frame, text="Delete command", command=ftools.partial(
+    utils.del_stored_command, stored_command_lbox)).grid(column=1, row=1)
 
-ip_entry = ttk.Entry(top_label_frame, width=15, textvariable=connection_ip)
-port_entry = ttk.Entry(top_label_frame, width=6, textvariable=connection_port)
-ip_entry.grid(column=0, row=1, pady=5, padx=5, sticky=tk.W)
-port_entry.grid(column=1, row=1, pady=5, padx=5, sticky=tk.W)
+# Right frame buttons. The naming is weird
+# b_connect = ttk.Button(r_button_frame, text="Connect",
+#                        command=ftools.partial(utils.connect, sock, con_ip, con_port))
+b_connect = ttk.Button(r_button_frame, text="Connect", command=ftools.partial(
+    utils.update_and_connect, sock, con_ip, con_port))
+b_close_con = ttk.Button(r_button_frame, text="Close connection", command=sock.disconnect)
+b_send_stored = ttk.Button(r_button_frame, text="Send stored", command=ftools.partial(
+    utils.send_stored_command, sock, stored_command_lbox, data_reply))
+b_send = ttk.Button(r_button_frame, text="Send", command=ftools.partial(
+    sock.send, data_to_send))
+b_connect.grid(column=0, row=0, sticky=(tk.N, tk.E, tk.S, tk.W))
+b_close_con.grid(column=0, row=1, sticky=(tk.N, tk.E, tk.S, tk.W))
+b_send_stored.grid(column=0, row=2, sticky=(tk.N, tk.E, tk.S, tk.W))
+b_send.grid(column=0, row=3, sticky=(tk.N, tk.E, tk.S, tk.W))
 
-# Create buttons in bottom frame
-ttk.Button(bframe, text="Connect", command=ftools.partial(
-    conwindow.spawnwindow, root, connection_ip, connection_port)).grid(column=0, row=0)
-ttk.Button(bframe, text="Exit", command=ftools.partial(
-    utils.program_exit, root)).grid(column=1, row=0)
 
-for child in bframe.winfo_children():
-    child.grid_configure(padx=5)
-
+# Give every child item some padding so that it doesn'root look like shit.
 for child in tframe.winfo_children():
-    child.grid_configure(padx=5)
+    child.grid_configure(padx=5, pady=5)
+
+for child in left_con_frame.winfo_children():
+    child.grid_configure(padx=5, pady=5)
+
+for child in l_con_frame.winfo_children():
+    child.grid_configure(padx=5, pady=5)
+
+for child in r_button_frame.winfo_children():
+    child.grid_configure(padx=5, pady=5)
+
+for child in con_frame.winfo_children():
+    child.grid_configure(padx=5, pady=2)
 
 root.mainloop()
