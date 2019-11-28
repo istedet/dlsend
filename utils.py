@@ -33,7 +33,7 @@ def convert_to_char(in_str):
     # then to the correct ASCII value
     while (i < len(in_str)):
         # Conditional logic to catch the '#' character
-        if (in_str[i] == '#'):
+        if (in_str[i] == '$'):
             new_str += chr(int(in_str[i+1:i+3], 16))
             i = i+3
             # The continue is used to escape this loop without running the bit
@@ -83,15 +83,15 @@ def update_and_disconnect(sock, ip_entry, port_entry):
     port_entry.configure(state="normal")
 
 
-def validate_ip_port(host, port):
-    try:
-        ipaddress.ip_address(host.get())
-        if (not port.get().isdigit()):
-            raise Exception("Port is not a number")
-    except Exception as e:
-        msgbox.showerror("Error", f'An error has occured: {e}')
-    else:
-        return (host.get(), int(port.get()))
+# def validate_ip_port(host, port):
+#     try:
+#         ipaddress.ip_address(host.get())
+#         if (not port.get().isdigit()):
+#             raise Exception("Port is not a number")
+#     except Exception as e:
+#         msgbox.showerror("Error", f'An error has occured: {e}')
+#     else:
+#         return (host.get(), int(port.get()))
 
 
 def update_data(*args):

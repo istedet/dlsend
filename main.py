@@ -4,12 +4,13 @@ import functools as ftools
 import utils
 import socket
 import tcpcom
+import filecom
 
 
 # Create main window
 root = tk.Tk()
 root.title("Datalogic transmission tool")
-stored_command_list = ['12 23233 344 44141', '2131231441241', '12412121  2332313']
+stored_command_list = filecom.load_file()
 stored_command_var = tk.StringVar()
 stored_command_var.set(stored_command_list)
 
@@ -66,8 +67,10 @@ d_ent_data.grid(column=0, row=1, sticky=tk.W)
 
 # Leftmost labelframe labels and listbox. The list variable has to be a
 # StringVar.
+# stored_command_lbox = tk.Listbox(
+#     left_con_frame, listvariable=stored_command_var, height=7, width=75)
 stored_command_lbox = tk.Listbox(
-    left_con_frame, listvariable=stored_command_var, height=7, width=75)
+    left_con_frame, list=stored_command_var, height=7, width=75)
 stored_command_lbox.grid(column=0, row=0, columnspan=2)
 # Exportselection has to be false otherwhise you get a "tuple index out of range"
 # error because the <<ListboxSelect>> event triggers with nothing selected
@@ -110,5 +113,6 @@ for child in r_button_frame.winfo_children():
 
 for child in con_frame.winfo_children():
     child.grid_configure(padx=5, pady=2)
+
 
 root.mainloop()
