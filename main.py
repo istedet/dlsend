@@ -5,6 +5,7 @@ import utils
 import socket
 import tcpcom
 import filecom
+import lbox
 
 
 # Create main window
@@ -67,18 +68,21 @@ d_ent_data.grid(column=0, row=1, sticky=tk.W)
 
 # Leftmost labelframe labels and listbox. The list variable has to be a
 # StringVar.
-# stored_command_lbox = tk.Listbox(
-#     left_con_frame, listvariable=stored_command_var, height=7, width=75)
 stored_command_lbox = tk.Listbox(
-    left_con_frame, list=stored_command_var, height=7, width=75)
-stored_command_lbox.grid(column=0, row=0, columnspan=2)
+    left_con_frame, listvariable=stored_command_var, height=7, width=75)
+stored_command_lbox.grid(column=0, row=0, columnspan=3)
+cust_lbox = lbox.lbox(stored_command_lbox, data_to_send)
+
 # Exportselection has to be false otherwhise you get a "tuple index out of range"
 # error because the <<ListboxSelect>> event triggers with nothing selected
 stored_command_lbox.configure(selectmode="browse", exportselection=False)
 ttk.Button(left_con_frame, text="Store command", command=ftools.partial(
-    utils.insert_stored_command, stored_command_lbox, data_to_send)).grid(column=0, row=1)
-ttk.Button(left_con_frame, text="Delete command", command=ftools.partial(
-    utils.del_stored_command, stored_command_lbox)).grid(column=1, row=1)
+    cust_lbox.com_insert, data_to_send)).grid(column=0, row=1, sticky=(tk.W, tk.E, tk.S, tk.W))
+ttk.Button(left_con_frame, text="Delete command",
+           command=cust_lbox.com_remove).grid(column=1, row=1, sticky=(tk.W, tk.E, tk.S, tk.W))
+ttk.Button(left_con_frame, text="Save to file", command=ftools.partial(
+    utils.save_com_file, cust_lbox)).grid(column=2, row=1, sticky=(tk.W, tk.E, tk.S, tk.W))
+
 
 # Buttons in the frame on the right that lets you connect/disconnect/send commands
 # and exit the program
@@ -91,12 +95,11 @@ b_send = ttk.Button(r_button_frame, text="Send", command=ftools.partial(
 b_exit = ttk.Button(r_button_frame, text="Exit", command=root.destroy)
 b_connect.grid(column=0, row=0, sticky=(tk.N, tk.E, tk.S, tk.W))
 b_close_con.grid(column=0, row=1, sticky=(tk.N, tk.E, tk.S, tk.W))
-b_send.grid(column=0, row=3, sticky=(tk.N, tk.E, tk.S, tk.W))
+b_send.grid(column=0, row=2, sticky=(tk.N, tk.E, tk.S, tk.W))
 b_exit.grid(column=0, row=10, sticky=(tk.N, tk.E, tk.S, tk.W))
 
 # Binding to update data_to_send when you select something in the list
-stored_command_lbox.bind('<<ListboxSelect>>', ftools.partial(
-    utils.update_data, data_to_send, stored_command_lbox))
+stored_command_lbox.bind('<<ListboxSelect>>', cust_lbox.update_data)
 
 # Give every child item some padding so that it doesn'root look like shit.
 for child in tframe.winfo_children():
@@ -113,6 +116,5 @@ for child in r_button_frame.winfo_children():
 
 for child in con_frame.winfo_children():
     child.grid_configure(padx=5, pady=2)
-
 
 root.mainloop()

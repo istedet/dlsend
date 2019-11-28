@@ -3,25 +3,7 @@ import select
 import tkinter as tk
 import ipaddress
 from tkinter import messagebox as msgbox
-
-
-def del_stored_command(lbox):
-    # Get the current selection and assign it to a variable. Cast this variable
-    # to an int so we can use it to remove an item from the list
-    try:
-        sidx = lbox.curselection()
-        idx = int(sidx[0])
-
-        lbox.delete(idx)
-    except Exception as e:
-        pass
-
-
-def insert_stored_command(lbox, new_var):
-    # Build type checking logic
-    new_str = new_var.get()
-    if (not (new_var.get() == '')):
-        lbox.insert(0, new_str)
+import filecom
 
 
 def convert_to_char(in_str):
@@ -29,7 +11,7 @@ def convert_to_char(in_str):
     new_str = ''
     i = 0
 
-    # Search through the string and convert the #** values to a byte value and
+    # Search through the string and convert the $** values to a byte value and
     # then to the correct ASCII value
     while (i < len(in_str)):
         # Conditional logic to catch the '#' character
@@ -47,6 +29,8 @@ def convert_to_char(in_str):
 
 
 def convert_from_char(b_arr):
+    # Logic to scan through the byte array and turn any non-printeable characters
+    # into printeable characters
     i = 0
     buf_str = ''
     cont_str = ''
@@ -69,8 +53,11 @@ def convert_from_char(b_arr):
 
 
 def update_and_connect(sock, chost, cport, ip_entry, port_entry):
-    # (host, port) = validate_ip_port(chost, cport)
+    # Update the host details in the class
     sock.sethostdetails(chost, cport)
+    # Checn to see if you were actually connected, by doing it this way we
+    # can make sure that the ip/port entries are only readonly if we successfully
+    # connected to a server
     connected = sock.connect()
     if (connected):
         ip_entry.configure(state="readonly")
@@ -78,24 +65,15 @@ def update_and_connect(sock, chost, cport, ip_entry, port_entry):
 
 
 def update_and_disconnect(sock, ip_entry, port_entry):
+    # trigger a disconnect from the socket object
     sock.disconnect()
+    # Done to make the entries for ip and port writeable again
     ip_entry.configure(state="normal")
     port_entry.configure(state="normal")
 
 
-# def validate_ip_port(host, port):
-#     try:
-#         ipaddress.ip_address(host.get())
-#         if (not port.get().isdigit()):
-#             raise Exception("Port is not a number")
-#     except Exception as e:
-#         msgbox.showerror("Error", f'An error has occured: {e}')
-#     else:
-#         return (host.get(), int(port.get()))
+def save_com_file(lbox):
+    # Create the dictonary to save to the file
+    dict = {'commands': lbox.create_list()}
 
-
-def update_data(*args):
-    sidx = args[1].curselection()
-    idx = int(sidx[0])
-
-    args[0].set(args[1].get(idx))
+    filecom.save_file(dict)
